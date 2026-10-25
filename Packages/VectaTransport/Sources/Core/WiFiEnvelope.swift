@@ -6,6 +6,9 @@ public enum WiFiCommand: Int16, Codable, CaseIterable {
     case handshake = 1
     case sayHello = 2
     case heartbeat = 3
+    /// Battery report the recorder pushes unprompted (SDK `wifiPower(power, voltage)`), seen about
+    /// 15 s after a file completes. Ignored, never a reason to abort the transfer.
+    case power = 4
     case list = 11
     case download = 12
     case content = 13

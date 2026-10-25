@@ -37,7 +37,7 @@ final class WiFiEnvelopeTests: XCTestCase {
     }
 
     func testCommandConstants() {
-        XCTAssertEqual(WiFiCommand.allCases.map(\.rawValue), [1, 2, 3, 11, 12, 13])
+        XCTAssertEqual(WiFiCommand.allCases.map(\.rawValue), [1, 2, 3, 4, 11, 12, 13])
     }
 
     func testExactJSONLimitAndNoSignedWrapping() throws {
@@ -83,6 +83,14 @@ final class WiFiEnvelopeTests: XCTestCase {
         }
     }
 
+    func testDecodesUnpromptedBatteryReport() throws {
+        // NotePin S pushes type 4 about 15 s after a file completes; rejecting it aborted
+        // the transfer while the received file was still being converted.
+        var wire = try WiFiEnvelope(metadata: WiFiHeartbeat()).encoded()
+        wire[4] = 4; wire[5] = 0
+        XCTAssertEqual(try WiFiEnvelope.decode(wire).command, .power)
+    }
+
     func testRejectsVersionUnknownSignedTypesAndImpossibleSizes() throws {
         let base = try WiFiEnvelope(metadata: WiFiHeartbeat()).encoded()
         for version: UInt8 in [0, 3, 255] {
@@ -91,7 +99,7 @@ final class WiFiEnvelopeTests: XCTestCase {
                 XCTAssertEqual($0 as? WiFiProtocolError, .unsupportedVersion(version))
             }
         }
-        for type: UInt16 in [0, 4, 10, 14, 0xffff, 0x8000] {
+        for type: UInt16 in [0, 5, 10, 14, 0xffff, 0x8000] {
             var wire = base; wire[4] = UInt8(type & 255); wire[5] = UInt8(type >> 8)
             XCTAssertThrowsError(try WiFiEnvelope.decode(wire)) {
                 XCTAssertEqual($0 as? WiFiProtocolError, .unsupportedCommand(Int16(bitPattern: type)))

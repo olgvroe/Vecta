@@ -101,6 +101,10 @@ import NotePinTransport
             // Modern-device traffic must authenticate with this BLE-negotiated key.
             // No ciphertext heuristic or plaintext fallback is used.
             let envelope = try WiFiEnvelope.decode(driver.openWiFiPDU(bytes))
+            if envelope.command == .power {
+                logger.notice("Recorder battery report ignored in phase \(String(describing: self.phase), privacy: .public)")
+                return
+            }
             if envelope.command == .heartbeat {
                 _ = try envelope.metadata(as: WiFiHeartbeat.self)
                 try send(WiFiHeartbeat(stamp: UInt64(Date().timeIntervalSince1970)))
